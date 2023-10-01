@@ -10,7 +10,7 @@ export const S3: FactoryProvider<S3Client> = {
   useFactory: (config: Config) => {
     const s3 = new S3Client({
       region: 'auto',
-      endpoint: `https://${config.objectStorage.r2.accountId}.r2.cloudflarestorage.com`,
+      endpoint: `https://${config.objectStorage.r2.accountId}`,
       credentials: {
         accessKeyId: config.objectStorage.r2.accessKeyId,
         secretAccessKey: config.objectStorage.r2.secretAccessKey,
