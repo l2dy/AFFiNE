@@ -6,12 +6,11 @@ on:
       flavor:
         description: 'Build type (canary, beta, or stable)'
         type: string
-        default: canary
+        default: stable
 
 env:
   BUILD_TYPE: canary
   APP_NAME: affine
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
   build-server:
@@ -45,13 +44,7 @@ jobs:
       - name: Build Core
         run: yarn nx build @affine/core
         env:
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           BUILD_TYPE_OVERRIDE: ${{ github.event.inputs.flavor }}
-          SHOULD_REPORT_TRACE: true
-          TRACE_REPORT_ENDPOINT: ${{ secrets.TRACE_REPORT_ENDPOINT }}
-          CAPTCHA_SITE_KEY: ${{ secrets.CAPTCHA_SITE_KEY }}
       - name: Upload core artifact
         uses: actions/upload-artifact@v3
         with:
@@ -72,7 +65,6 @@ jobs:
         with:
           target: 'x86_64-unknown-linux-gnu'
           package: '@affine/storage'
-          nx_token: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       - name: Upload storage.node
         uses: actions/upload-artifact@v3
         with:
@@ -93,7 +85,6 @@ jobs:
         with:
           target: 'aarch64-unknown-linux-gnu'
           package: '@affine/storage'
-          nx_token: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       - name: Upload storage.node
         uses: actions/upload-artifact@v3
         with:
@@ -163,7 +154,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           provenance: true
           file: .github/deployment/front/Dockerfile
-          tags: ghcr.io/toeverything/affine-front:${{env.RELEASE_FLAVOR}}-${{ env.GIT_SHORT_HASH }},ghcr.io/toeverything/affine-front:${{env.RELEASE_FLAVOR}}
+          tags: ghcr.io/l2dy/affine/affine-front:${{env.RELEASE_FLAVOR}}-${{ env.GIT_SHORT_HASH }},ghcr.io/l2dy/affine/affine-front:${{env.RELEASE_FLAVOR}}
 
       # setup node without cache configuration
       # Prisma cache is not compatible with docker build cache
@@ -191,52 +182,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           provenance: true
           file: .github/deployment/node/Dockerfile
-          tags: ghcr.io/toeverything/affine-graphql:${{env.RELEASE_FLAVOR}}-${{ env.GIT_SHORT_HASH }},ghcr.io/toeverything/affine-graphql:${{env.RELEASE_FLAVOR}}
-
-  deploy:
-    name: Deploy to cluster
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    environment: ${{ github.event.inputs.flavor }}
-    permissions:
-      contents: 'write'
-      id-token: 'write'
-    needs:
-      - build-docker
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to dev
-        uses: ./.github/actions/deploy
-        with:
-          build-type: ${{ github.event.inputs.flavor }}
-          gcp-project-number: ${{ secrets.GCP_PROJECT_NUMBER }}
-          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
-          service-account: ${{ secrets.GCP_HELM_DEPLOY_SERVICE_ACCOUNT }}
-          cluster-name: ${{ secrets.GCP_CLUSTER_NAME }}
-          cluster-location: ${{ secrets.GCP_CLUSTER_LOCATION }}
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          CANARY_DEPLOY_HOST: ${{ secrets.CANARY_DEPLOY_HOST }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
-          ENABLE_CAPTCHA: true
-          CAPTCHA_TURNSTILE_SECRET: ${{ secrets.CAPTCHA_TURNSTILE_SECRET }}
-          OAUTH_EMAIL_SENDER: ${{ secrets.OAUTH_EMAIL_SENDER }}
-          OAUTH_EMAIL_LOGIN: ${{ secrets.OAUTH_EMAIL_LOGIN }}
-          OAUTH_EMAIL_PASSWORD: ${{ secrets.OAUTH_EMAIL_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AFFINE_GOOGLE_CLIENT_ID: ${{ secrets.AFFINE_GOOGLE_CLIENT_ID }}
-          AFFINE_GOOGLE_CLIENT_SECRET: ${{ secrets.AFFINE_GOOGLE_CLIENT_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-          GCLOUD_CONNECTION_NAME: ${{ secrets.GCLOUD_CONNECTION_NAME }}
-          GCLOUD_CLOUD_SQL_INTERNAL_ENDPOINT: ${{ secrets.GCLOUD_CLOUD_SQL_INTERNAL_ENDPOINT }}
-          REDIS_HOST: ${{ secrets.REDIS_HOST }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          CLOUD_SQL_IAM_ACCOUNT: ${{ secrets.CLOUD_SQL_IAM_ACCOUNT }}
-          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-          STRIPE_WEBHOOK_KEY: ${{ secrets.STRIPE_WEBHOOK_KEY }}
+          tags: ghcr.io/l2dy/affine/affine-graphql:${{env.RELEASE_FLAVOR}}-${{ env.GIT_SHORT_HASH }},ghcr.io/l2dy/affine/affine-graphql:${{env.RELEASE_FLAVOR}}

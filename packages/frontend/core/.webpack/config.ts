@@ -77,11 +77,6 @@ export const getPublicPath = (buildFlags: BuildFlags) => {
     return publicPath;
   }
 
-  if (BUILD_TYPE === 'canary') {
-    return `https://dev.affineassets.com/${gitShortHash()}/`;
-  } else if (BUILD_TYPE === 'beta' || BUILD_TYPE === 'stable') {
-    return `https://prod.affineassets.com/${gitShortHash()}/`;
-  }
   return publicPath;
 };
 
